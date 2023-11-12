@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import sqlite3
 
-
+name = None
 
 bot = telebot.TeleBot("6665963815:AAFF3zSCU9oSLFuju2xa9HwXj7ccrn4a030")
 
@@ -24,10 +24,10 @@ def main(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    conn = sqlite3.connect('data_base.sql')
+    conn = sqlite3.connect('genesis_base.sql')
     cur = conn.cursor()
 
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_ment primary key, name varchar(50), phone varchar(12)')
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, name varchar(50), phone varchar(12)')
     conn.commit()
     cur.close()
     conn.close()
@@ -39,7 +39,28 @@ def start(message):
 
 
 def user_name(message):
-    pass
+    global name 
+    name = message.text.strip()
+    bot.send_message(message.chat.id, "add phone")
+    bot.register_next_step_handler(message, user_phone)
+
+def user_phone(message): 
+    tel = message.text.strip()
+    conn = sqlite3.connect('genesis_base.sql')
+    cur = conn.cursor()
+
+    cur.execute(f'INSERT INTO users (name, phone) VALUES ("%s", "%s")' % (name, tel))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton('User lists', callback_data='users'))
+    bot.send_message(message.chat.id, "you are registered!")
+    
+
+
+    
 
 @bot.message_handler()
 def info(message):
