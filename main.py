@@ -1,5 +1,4 @@
 import telebot
-from telebot import types
 import sqlite3
 
 name = None
@@ -27,7 +26,7 @@ def start(message):
     conn = sqlite3.connect('genesis_base.sql')
     cur = conn.cursor()
 
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, name varchar(50), phone varchar(12)')
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, name varchar(50), phone varchar(12))')
     conn.commit()
     cur.close()
     conn.close()
@@ -49,18 +48,52 @@ def user_phone(message):
     conn = sqlite3.connect('genesis_base.sql')
     cur = conn.cursor()
 
-    cur.execute(f'INSERT INTO users (name, phone) VALUES ("%s", "%s")' % (name, tel))
+    cur.execute('INSERT INTO users (name, phone) VALUES ("%s", "%s")' % (name, tel))
     conn.commit()
     cur.close()
     conn.close()
 
     markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton('User lists', callback_data='users'))
-    bot.send_message(message.chat.id, "you are registered!")
-    
+    markup.add(telebot.types.InlineKeyboardButton('show all', callback_data='users'))
+    bot.send_message(message.chat.id, "you are registered!", reply_markup=markup)
 
 
-    
+@bot.callback_query_handler(func=lambda call: True)
+def callback(call):
+    conn = sqlite3.connect('genesis_base.sql')
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users")
+    users = cur.fetchall()
+
+    info = ""
+    for el in users:
+        info += f"Name: {el[1]}, Phone: {el[2]}\n"
+        if call.text == {el[1]}:
+            bot.send_message(call.message.chat.id, f"Name: {el[1]}, Phone: {el[2]}\n")
+    cur.close()
+    conn.close()
+
+    bot.send_message(call.message.chat.id, info)
+
+
+
+@bot.message_handler(commands=['change'])
+def start(message):
+    conn = sqlite3.connect('genesis_base.sql')
+    cur = conn.cursor()
+
+    cur.execute('UPDATE Users SET phone = ? WHERE name = ?', (29, user_name))
+    conn.commit()
+    cur.close()
+    conn.close()
+    bot.send_message(message.chat.id, "write name")
+    bot.send_message(message.chat.id, user_name)
+    bot.register_next_step_handler(message, user_name)
+
+
+
+
 
 @bot.message_handler()
 def info(message):
@@ -68,6 +101,7 @@ def info(message):
         bot.send_message(message.chat.id, f"How can I help you, {message.from_user.first_name}?")
     elif message.text.lower() == 'id':
         bot.reply_to(message, f'ID: {message.from_user.id}')
+
 
 
 
