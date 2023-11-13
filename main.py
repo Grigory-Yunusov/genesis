@@ -69,8 +69,7 @@ def callback(call):
     info = ""
     for el in users:
         info += f"Name: {el[1]}, Phone: {el[2]}\n"
-        if call.text == {el[1]}:
-            bot.send_message(call.message.chat.id, f"Name: {el[1]}, Phone: {el[2]}\n")
+
     cur.close()
     conn.close()
 
@@ -79,17 +78,27 @@ def callback(call):
 
 
 @bot.message_handler(commands=['change'])
-def start(message):
+def change(message):
     conn = sqlite3.connect('genesis_base.sql')
     cur = conn.cursor()
 
-    cur.execute('UPDATE Users SET phone = ? WHERE name = ?', (29, user_name))
+    cur.execute('UPDATE users SET phone = ? WHERE name = ?', (6, f"{user_name}"))
     conn.commit()
     cur.close()
     conn.close()
     bot.send_message(message.chat.id, "write name")
     bot.send_message(message.chat.id, user_name)
-    bot.register_next_step_handler(message, user_name)
+    bot.send_message(message.chat.id, "change phone")
+    bot.register_next_step_handler(message, user_phone)
+def change_phone(message):
+    global name
+    name = message.text.strip()
+    # bot.send_message(message.chat.id, "change phone")
+    # bot.register_next_step_handler(message, user_phone)
+
+
+
+
 
 
 
